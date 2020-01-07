@@ -2,9 +2,18 @@ extern crate config;
 
 #[macro_use]
 extern crate serde_json;
+extern crate serde;
 
 use reqwest::StatusCode;
 use config::Config;
+use serde_json::Value;
+use serde::{Deserialize};
+
+#[derive(Debug, Deserialize)]
+struct KeywordResult {
+    request: Value,
+    response: Value
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // read configurations
@@ -31,7 +40,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resp = client.get(&keyword_url).json(&item).send()?;
 
     match resp.status() {
-        StatusCode::OK => println!("{:#?}", resp.text()?),
+        StatusCode::OK => {
+            let v: KeywordResult = resp.json()?;
+            for x in v.response.as_array().unwrap() {
+                println!("{:?}, {:?}", x["keyword"].as_str().unwrap(), x["keyword_id"].as_i64().unwrap());
+            }
+        },
         s => {
             println!("Received response status: {:?}, body {:?}", s, resp.text());
         },
