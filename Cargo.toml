@@ -13,3 +13,4 @@ config = "0.9"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 cpython = "0.2"
+postgres = "0.17.0"

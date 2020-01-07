@@ -3,11 +3,13 @@ extern crate config;
 #[macro_use]
 extern crate serde_json;
 extern crate serde;
+extern crate postgres;
 
 use reqwest::StatusCode;
 use config::Config;
 use serde_json::Value;
 use serde::{Deserialize};
+use postgres::{Client, NoTls};
 
 #[derive(Debug, Deserialize)]
 struct KeywordResult {
@@ -25,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // prepare params
     let mut keyword_vec: Vec<i64> = Vec::new();
-    for x in 0..10 {
+    for x in 0..100 {
         keyword_vec.push(x);
     }
 
@@ -42,7 +44,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match resp.status() {
         StatusCode::OK => {
             let v: KeywordResult = resp.json()?;
+
+            let mut client = Client::connect("host=localhost user=marcelolecar dbname=frybot_test", NoTls)?;
+
             for x in v.response.as_array().unwrap() {
+                let keyword_str = x["keyword"].as_str().unwrap();
+                let keyword_id = x["keyword_id"].as_i64().unwrap();
+                if keyword_str.trim() == "" {
+                    continue;
+                }
+                client.execute("INSERT INTO keyword_test (keyword_id, keyword) VALUES ($1, $2) ON CONFLICT DO NOTHING", &[&keyword_id, &keyword_str])?;
                 println!("{:?}, {:?}", x["keyword"].as_str().unwrap(), x["keyword_id"].as_i64().unwrap());
             }
         },
