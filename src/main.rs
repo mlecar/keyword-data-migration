@@ -5,12 +5,14 @@ extern crate serde_json;
 extern crate serde;
 #[macro_use]
 extern crate mysql;
+extern crate simple_logger;
 
 use reqwest::StatusCode;
 use config::Config;
 use serde_json::Value;
 use serde::{Deserialize};
 use mysql as my;
+use log::{info, warn, Level};
 
 #[derive(Debug, Deserialize)]
 struct KeywordResult {
@@ -19,6 +21,9 @@ struct KeywordResult {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    simple_logger::init_with_level(Level::Info).unwrap();
+    info!("Starting import");
+
     // read configurations
     let mut settings: Config = config::Config::default();
     settings.merge(config::File::with_name("settings")).unwrap();
@@ -36,16 +41,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // loop
     while end <= current_max_keyword_id {
-
         // prepare params
         let mut keyword_vec: Vec<i64> = Vec::new();
         for x in start..end {
             keyword_vec.push(x);
-            println!("{:?}", x);
+            //info!("{:?}", x);
         }
-        start+=500;
-        end = start + 500;
-        println!("more");
 
         let item = json!({
             "keyword_id": &keyword_vec,
@@ -66,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if keyword_str.trim() == "" {
                             continue;
                         }
-                        println!("{:?}, {:?}", x["keyword"].as_str().unwrap(), x["keyword_id"].as_i64().unwrap());
+                        //info!("{:?}, {:?}", x["keyword"].as_str().unwrap(), x["keyword_id"].as_i64().unwrap());
 
                         stmt.execute(params! {
                         "keyword_id" => keyword_id,
@@ -76,9 +77,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             },
             s => {
-                println!("Received response status: {:?}, body {:?}", s, resp.text());
+                warn!("Received response status: {:?}, body {:?}", s, resp.text());
             },
         };
+        info!("Imported keywords from {:?} to {:?}", start, end);
+        start+=500;
+        end = start + 500;
     }
 
     Ok(())
