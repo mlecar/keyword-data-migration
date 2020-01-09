@@ -11,8 +11,8 @@ use reqwest::StatusCode;
 use config::Config;
 use serde_json::Value;
 use serde::{Deserialize};
-use mysql as my;
 use log::{info, warn, Level};
+use mysql::Pool;
 
 #[derive(Debug, Deserialize)]
 struct KeywordResult {
@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let resp = client.get(&keyword_url).json(&item).send()?;
 
-        let pool = my::Pool::new("mysql://root:sa@localhost:3306/keyword_test").unwrap();
+        let pool = mysql::Pool::new("mysql://root:sa@localhost:3306/keyword_test").unwrap();
 
         match resp.status() {
             StatusCode::OK => {
@@ -67,26 +67,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 info!("valid_keywords {:?}", valid_keywords);
                 info!("empty_keywords {:?}", empty_keywords);
 
-                // stringprefix r means it will be treated as a raw string
-                for mut stmt in pool.prepare(r"INSERT IGNORE INTO keyword_test (keyword_id, keyword) VALUES (:keyword_id, :keyword)").into_iter() {
-                    for x in &valid_keywords {
-                        let keyword_str = x["keyword"].as_str().unwrap();
-                        let keyword_id = x["keyword_id"].as_i64().unwrap();
-                        stmt.execute(params! {
-                            "keyword_id" => keyword_id,
-                            "keyword" => keyword_str
-                        }).unwrap();
-                    }
-                }
-
-                for mut stmt in pool.prepare(r"INSERT IGNORE INTO unused_keyword_id (keyword_id) VALUES (:keyword_id)").into_iter() {
-                    for x in &empty_keywords {
-                        let keyword_id = x["keyword_id"].as_i64().unwrap();
-                        stmt.execute(params! {
-                            "keyword_id" => keyword_id,
-                        }).unwrap();
-                    }
-                }
+                save_keyword(&valid_keywords, &pool);
+                save_unused_keyword_ids(&empty_keywords, &pool);
             },
             s => {
                 warn!("Received response status: {:?}, body {:?}", s, resp.text());
@@ -98,4 +80,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn save_keyword(valid_keywords: &Vec<&Value>, pool:&Pool) {
+    // stringprefix r means it will be treated as a raw string
+    for mut stmt in pool.prepare(r"INSERT IGNORE INTO keyword_test (id, keyword) VALUES (:keyword_id, :keyword)").into_iter() {
+        for x in valid_keywords {
+            let keyword_str = x["keyword"].as_str().unwrap();
+            let keyword_id = x["keyword_id"].as_i64().unwrap();
+            stmt.execute(params! {
+                            "keyword_id" => keyword_id,
+                            "keyword" => keyword_str
+                        }).unwrap();
+        }
+    }
+}
+
+fn save_unused_keyword_ids(empty_keywords: &Vec<&Value>, pool:&Pool) {
+    // stringprefix r means it will be treated as a raw string
+    for mut stmt in pool.prepare(r"INSERT IGNORE INTO unused_keyword_id_test (id) VALUES (:keyword_id)").into_iter() {
+        for x in empty_keywords {
+            let keyword_id = x["keyword_id"].as_i64().unwrap();
+            stmt.execute(params! {
+                            "keyword_id" => keyword_id,
+                        }).unwrap();
+        }
+    }
 }
