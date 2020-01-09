@@ -32,12 +32,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let keyword_id_start = settings.get::<i64>("keyword_id_start").unwrap();
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
 
+    let database_host = settings.get::<String>("database_host").unwrap();
+    let database_user = settings.get::<String>("database_user").unwrap();
+    let database_password = settings.get::<String>("database_password").unwrap();
+    let database_name = settings.get::<String>("database_name").unwrap();
+
+    let mut increment = 2000;
+
     // client for request
     let client = reqwest::blocking::Client::new();
 
     // flow
     let mut start = keyword_id_start;
-    let mut end = keyword_id_start + 500;
+    let mut end = keyword_id_start + increment;
 
     // loop
     while end <= current_max_keyword_id {
@@ -55,7 +62,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let resp = client.get(&keyword_url).json(&item).send()?;
 
-        let pool = mysql::Pool::new("mysql://root:sa@localhost:3306/keyword_test").unwrap();
+        let database_connection_string = format!("mysql://{}:{}@{}:3306/{}", &database_user, &database_password, &database_host, &database_name);
+
+        let pool = mysql::Pool::new(&database_connection_string).unwrap();
 
         match resp.status() {
             StatusCode::OK => {
@@ -75,8 +84,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         };
         info!("Imported keywords from {:?} to {:?}", start, end);
-        start+=500;
-        end = start + 500;
+        start+=increment;
+        end = start + increment;
     }
 
     Ok(())
