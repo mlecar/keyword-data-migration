@@ -55,24 +55,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let resp = client.get(&keyword_url).json(&item).send()?;
 
+        let pool = my::Pool::new("mysql://root:sa@localhost:3306/keyword_test").unwrap();
+
         match resp.status() {
             StatusCode::OK => {
                 let v: KeywordResult = resp.json()?;
 
-                let pool = my::Pool::new("mysql://root:sa@localhost:3306/keyword_test").unwrap();
+                let valid_keywords = v.response.as_array().unwrap().iter().filter(|&k| k["keyword"].as_str().unwrap().trim() != "" ).collect::<Vec<_>>();
+                let empty_keywords = v.response.as_array().unwrap().iter().filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
+
+                info!("valid_keywords {:?}", valid_keywords);
+                info!("empty_keywords {:?}", empty_keywords);
+
+                // stringprefix r means it will be treated as a raw string
                 for mut stmt in pool.prepare(r"INSERT IGNORE INTO keyword_test (keyword_id, keyword) VALUES (:keyword_id, :keyword)").into_iter() {
-                    for x in v.response.as_array().unwrap() {
+                    for x in &valid_keywords {
                         let keyword_str = x["keyword"].as_str().unwrap();
                         let keyword_id = x["keyword_id"].as_i64().unwrap();
-                        if keyword_str.trim() == "" {
-                            continue;
-                        }
-                        //info!("{:?}, {:?}", x["keyword"].as_str().unwrap(), x["keyword_id"].as_i64().unwrap());
-
                         stmt.execute(params! {
-                        "keyword_id" => keyword_id,
-                        "keyword" => keyword_str
-                    }).unwrap();
+                            "keyword_id" => keyword_id,
+                            "keyword" => keyword_str
+                        }).unwrap();
+                    }
+                }
+
+                for mut stmt in pool.prepare(r"INSERT IGNORE INTO unused_keyword_id (keyword_id) VALUES (:keyword_id)").into_iter() {
+                    for x in &empty_keywords {
+                        let keyword_id = x["keyword_id"].as_i64().unwrap();
+                        stmt.execute(params! {
+                            "keyword_id" => keyword_id,
+                        }).unwrap();
                     }
                 }
             },
