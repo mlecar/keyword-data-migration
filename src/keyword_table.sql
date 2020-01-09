@@ -1,10 +1,10 @@
-create table if not exists keyword_test (
-                              keyword_id bigint PRIMARY KEY AUTO_INCREMENT,
-                              keyword nvarchar(200) not null,
-                              created_at timestamp not null DEFAULT NOW()
-)
+CREATE TABLE `keyword_test` (
+                                `id` bigint unsigned PRIMARY KEY AUTO_INCREMENT COMMENT 'PK',
+                                `keyword` nvarchar(200) NOT NULL COMMENT 'keyword',
+    UNIQUE KEY `udx_keyword` (`keyword`) USING BTREE
+    ) ENGINE=InnoDB AUTO_INCREMENT=3232148376 DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='global keyword base';
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-create table if not exists unused_keyword_id (
-                                            keyword_id bigint PRIMARY KEY AUTO_INCREMENT,
-                                            created_at timestamp not null DEFAULT NOW()
-)
+CREATE TABLE `unused_keyword_id_test` (
+    `id` bigint unsigned PRIMARY KEY COMMENT 'PK'
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='global keyword base for unused keyword id';
