@@ -1,5 +1,5 @@
 [package]
-name = "keyword-data-migration"
+name = "keyword_data_migration"
 version = "0.1.0"
 authors = ["marcelolecar"]
 edition = "2018"
@@ -16,3 +16,7 @@ cpython = "0.2"
 mysql = "*"
 log = "0.4"
 simple_logger = "1.4.0"
+diesel = { version = "1.0.0", features = ["mysql"] }
+dotenv = "0.9.0"
+r2d2 = "0.8.8"
+r2d2_mysql="*"

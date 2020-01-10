@@ -3,3 +3,4 @@ settings.toml
 Cargo.lock
 *.iml
 .idea
+.env
