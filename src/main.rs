@@ -44,15 +44,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // flow
     let mut start = keyword_id_start;
-    let mut end = keyword_id_start + increment;
+    let mut end = keyword_id_start;
 
     // loop
-    while end <= current_max_keyword_id {
+    while end < current_max_keyword_id {
+        end+=increment;
+
         // prepare params
         let mut keyword_vec: Vec<i64> = Vec::new();
         for x in start..end {
             keyword_vec.push(x);
-            //info!("{:?}", x);
+            info!("{:?}", x);
         }
 
         let item = json!({
@@ -87,9 +89,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 warn!("Received response status: {:?}, body {:?}", s, resp.text());
             },
         };
-        info!("Imported keywords from {:?} to {:?}", start, end);
-        start+=increment;
-        end = start + increment;
+        info!("Imported keywords from {:?} to {:?}", start, end-1);
+        start = end;
     }
 
     Ok(())
