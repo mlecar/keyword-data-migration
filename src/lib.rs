@@ -29,7 +29,7 @@ pub fn establish_connection() -> MysqlConnection {
         .expect(&format!("Error connecting to {}", &database_connection_string))
 }
 
-pub fn save_keyword<'a>(conn: &MysqlConnection, id: &'a i64, keyword: &'a str) -> Result<(), Error> {
+pub fn save_keyword<'a>(conn: &MysqlConnection, id: i64, keyword: &'a str) -> Result<(), Error> {
     use schema::keyword;
 
     let new_keyword = Keyword {

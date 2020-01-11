@@ -65,29 +65,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             StatusCode::OK => {
                 let v: KeywordResult = resp.json()?;
 
-                let valid_keywords = v.response.as_array().unwrap().iter().filter(|&k| k["keyword"].as_str().unwrap().trim() != "" ).collect::<Vec<_>>();
-                let empty_keywords = v.response.as_array().unwrap().iter().filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
+                let valid_keywords = v.response.as_array().unwrap().iter()
+                    .filter(|&k| k["keyword"].as_str().unwrap().trim() != "" ).collect::<Vec<_>>();
+
+                let empty_keywords = v.response.as_array().unwrap().iter()
+                    .filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
 
                 info!("valid_keywords {:?}", valid_keywords);
                 info!("empty_keywords {:?}", empty_keywords);
 
-                let mut valid_keywords_2: Vec<Keyword> = Vec::new();
-                for x in valid_keywords {
-                    let keyword_str = x["keyword"].as_str().unwrap();
-                    let keyword_id = x["keyword_id"].as_i64().unwrap();
-                    valid_keywords_2.push(Keyword {
-                        keyword_str,
-                        id: &keyword_id,
-                    });
-                }
+                let valid_keywords_2: Vec<Keyword> =
+                    valid_keywords.iter().map(|x| Keyword {
+                        keyword_str: x["keyword"].as_str().unwrap(),
+                        id: x["keyword_id"].as_i64().unwrap(),
+                    }).collect();
 
-                let mut empty_keywords_2: Vec<UnusedKeywordId> = Vec::new();
-                for x in empty_keywords {
-                    let keyword_id = x["keyword_id"].as_i64().unwrap();
-                    empty_keywords_2.push(UnusedKeywordId {
-                        id: &keyword_id,
-                    });
-                }
+                let empty_keywords_2: Vec<UnusedKeywordId> =
+                    empty_keywords.iter().map(|&k| UnusedKeywordId { id: k["keyword_id"].as_i64().unwrap()}).collect();
 
                 save_keywords_batch(&conn, &valid_keywords_2)?;
                 save_unused_keywords_batch(&conn, &empty_keywords_2)?;
