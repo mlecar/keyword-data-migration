@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let keyword_id_start = settings.get::<i64>("keyword_id_start").unwrap();
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
 
-    let increment = 2000;
+    let increment = 20000;
 
     // client for request
     let client = reqwest::blocking::Client::new();
@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut keyword_vec: Vec<i64> = Vec::new();
         for x in start..end {
             keyword_vec.push(x);
-            info!("{:?}", x);
+            //info!("{:?}", x);
         }
 
         let item = json!({
@@ -71,8 +71,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let empty_keywords = v.response.as_array().unwrap().iter()
                     .filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
 
-                info!("valid_keywords {:?}", valid_keywords);
-                info!("empty_keywords {:?}", empty_keywords);
+                //info!("valid_keywords {:?}", valid_keywords);
+                //info!("empty_keywords {:?}", empty_keywords);
 
                 let valid_keywords_2: Vec<Keyword> =
                     valid_keywords.iter().map(|x| Keyword {
