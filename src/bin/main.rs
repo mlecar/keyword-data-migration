@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let keyword_id_start = settings.get::<i64>("keyword_id_start").unwrap();
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
 
-    let increment = 2000;
+    let increment = 20000;
 
     // client for request
     let client = reqwest::blocking::Client::new();

@@ -8,3 +8,9 @@ CREATE TABLE `keyword_test` (
 CREATE TABLE `unused_keyword_id_test` (
     `id` bigint unsigned PRIMARY KEY COMMENT 'PK'
 ) ENGINE=MYISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='global keyword base for unused keyword id';
+
+create table migration_statistics (
+ unused_count bigint,
+ migrated_from_id bigint,
+ migrated_to_id bigint
+)
