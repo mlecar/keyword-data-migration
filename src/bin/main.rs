@@ -1,21 +1,24 @@
-extern crate keyword_data_migration;
 extern crate config;
-
+extern crate keyword_data_migration;
+extern crate serde;
 #[macro_use]
 extern crate serde_json;
-extern crate serde;
 extern crate simple_logger;
 
-use reqwest::StatusCode;
-use config::Config;
-use serde_json::Value;
-use serde::{Deserialize};
-use log::{info, warn, Level};
-use self::keyword_data_migration::*;
-use keyword_data_migration::models::{Keyword, UnusedKeywordId};
-use std::error::Error;
-use reqwest::blocking::Client;
 use std::convert::TryFrom;
+use std::error::Error;
+use std::time::Instant;
+
+use config::Config;
+use log::{info, Level, warn};
+use reqwest::blocking::Client;
+use reqwest::StatusCode;
+use serde::Deserialize;
+use serde_json::Value;
+
+use keyword_data_migration::models::{Keyword, UnusedKeywordId};
+
+use self::keyword_data_migration::*;
 
 #[derive(Debug, Deserialize)]
 struct KeywordResult {
@@ -24,6 +27,7 @@ struct KeywordResult {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let now = Instant::now();
     simple_logger::init_with_level(Level::Info).unwrap();
     info!("Starting import");
 
@@ -35,8 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let keyword_id_start = settings.get::<i64>("keyword_id_start").unwrap();
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
     let statistics_url:String = settings.get::<String>("statistics_url").unwrap();
-
-    let increment = 10000;
+    let increment:i64 = settings.get::<i64>("increment").unwrap();
 
     // client for request
     let client = Client::new();
@@ -49,10 +52,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // loop
     while end < current_max_keyword_id {
+        let exec_time = Instant::now();
         end+=increment;
 
         let unused_count = get_statistics(&client, &statistics_url)?;
-        info!("Unused ids count: {:?}",&unused_count);
+        //info!("Unused ids count: {:?}",&unused_count);
 
         // prepare params
         let mut keyword_vec: Vec<i64> = Vec::new();
@@ -98,9 +102,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 warn!("Received response status: {:?}, body {:?}", s, resp.text());
             },
         };
-        info!("Imported keywords from {:?} to {:?}", start, end-1);
+        info!("Imported keywords from {:?} to {:?} in {:?} seconds. Total execution in {:?}", start, end-1, exec_time.elapsed().as_secs(), now.elapsed().as_secs());
         start = end;
     }
+    info!("Total execution in {:?} seconds", now.elapsed().as_secs());
     Ok(())
 }
 
