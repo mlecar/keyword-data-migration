@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         end+=increment;
 
         let unused_count = get_statistics(&client, &statistics_url)?;
-        info!("{:?}",&unused_count);
+        info!("Unused ids count: {:?}",&unused_count);
 
         // prepare params
         let mut keyword_vec: Vec<i64> = Vec::new();
