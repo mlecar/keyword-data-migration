@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
     let statistics_url:String = settings.get::<String>("statistics_url").unwrap();
 
-    let increment = 20000;
+    let increment = 10000;
 
     // client for request
     let client = Client::new();

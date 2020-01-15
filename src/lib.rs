@@ -3,8 +3,6 @@ pub mod models;
 
 #[macro_use]
 extern crate diesel;
-extern crate r2d2;
-extern crate r2d2_mysql;
 
 use diesel::prelude::*;
 use diesel::mysql::MysqlConnection;
