@@ -102,10 +102,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 warn!("Received response status: {:?}, body {:?}", s, resp.text());
             },
         };
-        info!("Imported keywords from {:?} to {:?} in {:?} seconds. Total execution in {:?}", start, end-1, exec_time.elapsed().as_secs(), now.elapsed().as_secs());
+        info!("Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}", start, end-1, exec_time.elapsed().as_millis(), now.elapsed().as_secs());
         start = end;
     }
-    info!("Total execution in {:?} seconds", now.elapsed().as_secs());
+    info!("Total execution from {:?} to {:?} in {:?} seconds", keyword_id_start, current_max_keyword_id-1, now.elapsed().as_secs());
     Ok(())
 }
 
