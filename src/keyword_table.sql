@@ -14,5 +14,8 @@ id bigint AUTO_INCREMENT PRIMARY KEY,
  unused_count bigint,
  migrated_from_id bigint,
  migrated_to_id bigint,
- migrated_at timestamp default now()
+ migrated_at timestamp default now(),
+ migration_step varchar(10)
 )
+
+ALTER TABLE migration_statistics ADD migration_step varchar(10)

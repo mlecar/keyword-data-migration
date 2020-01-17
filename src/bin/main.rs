@@ -40,23 +40,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let current_max_keyword_id = settings.get::<i64>("max_keyword_id").unwrap();
     let statistics_url:String = settings.get::<String>("statistics_url").unwrap();
     let increment:i64 = settings.get::<i64>("increment").unwrap();
+    let last_inserted_record:i64 = current_max_keyword_id-1;
+
+    // database connection
+    let conn = establish_connection();
 
     // client for request
     let client = Client::new();
+
+    let unused_count = get_statistics(&client, &statistics_url)?;
+    //info!("Unused ids count: {:?}",&unused_count);
+    save_migration_statistic(&conn,
+                             &unused_count,
+                             &keyword_id_start,
+                             &last_inserted_record,
+                             "START")?;
 
     // flow
     let mut start = keyword_id_start;
     let mut end = keyword_id_start;
 
-    let conn = establish_connection();
-
     // loop
     while end < current_max_keyword_id {
         let exec_time = Instant::now();
         end+=increment;
-
-        let unused_count = get_statistics(&client, &statistics_url)?;
-        //info!("Unused ids count: {:?}",&unused_count);
 
         // prepare params
         let mut keyword_vec: Vec<i64> = Vec::new();
@@ -96,7 +103,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 save_keywords_batch(&conn, &valid_keywords_2)?;
                 save_unused_keywords_batch(&conn, &empty_keywords_2)?;
-                save_migration_statistic(&conn, &unused_count, &start, &end)?;
             },
             s => {
                 warn!("Received response status: {:?}, body {:?}", s, resp.text());
@@ -105,6 +111,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}", start, end-1, exec_time.elapsed().as_millis(), now.elapsed().as_secs());
         start = end;
     }
+    save_migration_statistic(&conn,
+                             &unused_count,
+                             &keyword_id_start,
+                             &last_inserted_record,
+                              "END")?;
     info!("Total execution from {:?} to {:?} in {:?} seconds", keyword_id_start, current_max_keyword_id-1, now.elapsed().as_secs());
     Ok(())
 }
