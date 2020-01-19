@@ -19,6 +19,7 @@ use serde_json::Value;
 use keyword_data_migration::models::{Keyword, UnusedKeywordId};
 
 use self::keyword_data_migration::*;
+use diesel::MysqlConnection;
 
 #[derive(Debug, Deserialize)]
 struct KeywordResult {
@@ -77,37 +78,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ignore_errors": true
         });
 
-        let resp = client.get(&keyword_url).json(&item).send()?;
-
-        match resp.status() {
-            StatusCode::OK => {
-                let v: KeywordResult = resp.json()?;
-
-                let valid_keywords = v.response.as_array().unwrap().iter()
-                    .filter(|&k| k["keyword"].as_str().unwrap().trim() != "" ).collect::<Vec<_>>();
-
-                let empty_keywords = v.response.as_array().unwrap().iter()
-                    .filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
-
-                //info!("valid_keywords {:?}", valid_keywords);
-                //info!("empty_keywords {:?}", empty_keywords);
-
-                let valid_keywords_2: Vec<Keyword> =
-                    valid_keywords.iter().map(|x| Keyword {
-                        keyword_str: x["keyword"].as_str().unwrap(),
-                        id: x["keyword_id"].as_i64().unwrap(),
-                    }).collect();
-
-                let empty_keywords_2: Vec<UnusedKeywordId> =
-                    empty_keywords.iter().map(|&k| UnusedKeywordId { id: k["keyword_id"].as_i64().unwrap()}).collect();
-
-                save_keywords_batch(&conn, &valid_keywords_2)?;
-                save_unused_keywords_batch(&conn, &empty_keywords_2)?;
+        match client.get(&keyword_url).json(&item).send() {
+            Err(e) => {
+                save_migration_statistic(&conn,
+                                         &unused_count,
+                                         &keyword_id_start,
+                                         &last_inserted_record,
+                                         format!("Error {:?} ", e).as_ref())?;
             },
-            s => {
-                warn!("Received response status: {:?}, body {:?}", s, resp.text());
-            },
+            Ok(response) => {
+                match response.status() {
+                    StatusCode::OK => {
+                        let v: KeywordResult = response.json()?;
+                        read_response_and_save_database(&v, &conn)?;
+                    },
+                    s => {
+                        warn!("Received response status: {:?}, body {:?}", s, response.text());
+                    },
+                };
+            }
         };
+
         info!("Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}", start, end-1, exec_time.elapsed().as_millis(), now.elapsed().as_secs());
         start = end;
     }
@@ -120,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn get_statistics(client: &Client, statistics_url:&String) -> Result<i64, Box<dyn Error>>{
+fn get_statistics(client: &Client, statistics_url:&String) -> Result<i64, Box<dyn Error>>{
     let resp_statistics = client.get(statistics_url).send()?;
     match resp_statistics.status(){
         StatusCode::OK => {
@@ -133,5 +124,28 @@ pub fn get_statistics(client: &Client, statistics_url:&String) -> Result<i64, Bo
             Err(Box::try_from("Failed to get statistics").unwrap())
         },
     }
+}
 
+fn read_response_and_save_database (v: &KeywordResult, conn:&MysqlConnection) -> Result<(), Box<dyn Error>> {
+    let valid_keywords = v.response.as_array().unwrap().iter()
+        .filter(|&k| k["keyword"].as_str().unwrap().trim() != "" ).collect::<Vec<_>>();
+
+    let empty_keywords = v.response.as_array().unwrap().iter()
+        .filter(|&k| k["keyword"].as_str().unwrap().trim() == "" ).collect::<Vec<_>>();
+
+    //info!("valid_keywords {:?}", valid_keywords);
+    //info!("empty_keywords {:?}", empty_keywords);
+
+    let valid_keywords_2: Vec<Keyword> =
+        valid_keywords.iter().map(|x| Keyword {
+            keyword_str: x["keyword"].as_str().unwrap(),
+            id: x["keyword_id"].as_i64().unwrap(),
+        }).collect();
+
+    let empty_keywords_2: Vec<UnusedKeywordId> =
+        empty_keywords.iter().map(|&k| UnusedKeywordId { id: k["keyword_id"].as_i64().unwrap()}).collect();
+
+    save_keywords_batch(conn, &valid_keywords_2)?;
+    save_unused_keywords_batch(conn, &empty_keywords_2)?;
+    Ok(())
 }
