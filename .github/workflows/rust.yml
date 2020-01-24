@@ -9,8 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install mysqlclient prerequisites
+      run: sudo apt-get install python-dev default-libmysqlclient-de
     - name: Install mysqlclient
-      run: cargo install diesel_cli --no-default-features --features mysql
+      run: pip install mysqlclient
     - name: Build
       run: cargo build --verbose
     - name: Run tests
