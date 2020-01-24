@@ -1,4 +1,5 @@
 # keyword-data-migration
+![Rust](https://github.com/mlecar/keyword-data-migration/workflows/Rust/badge.svg)
 
 Here you will find a programmatic way of getting data from a microservice and store it on a database.
 This repo is using [Rust language](https://www.rust-lang.org/).
