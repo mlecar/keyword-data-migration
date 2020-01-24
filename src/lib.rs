@@ -7,3 +7,5 @@ pub mod unused_keywords;
 
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate serde_json;

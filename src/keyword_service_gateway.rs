@@ -1,4 +1,5 @@
 pub mod database_statistics;
+pub mod keywords;
 pub mod response_filter;
 
 use serde::Deserialize;
