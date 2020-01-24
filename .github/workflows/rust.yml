@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Update
+      run: sudo apt-get update
     - name: Install mysqlclient prerequisites
       run: sudo apt-get install python-dev default-libmysqlclient-de
     - name: Install mysqlclient
