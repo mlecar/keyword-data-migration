@@ -1,0 +1,23 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Update
+      run: sudo apt-get update
+    - name: Install python-dev
+      run: sudo apt-get -y install python-dev
+    - name: Install default-libmysqlclient-dev
+      run: sudo apt-get -y install default-libmysqlclient-dev
+    - name: Install mysqlclient
+      run: pip install mysqlclient
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
