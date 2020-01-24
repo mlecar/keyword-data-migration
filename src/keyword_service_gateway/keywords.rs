@@ -1,4 +1,4 @@
-use crate::json_to_model_mapper::{map_keywords, map_unused_keywords};
+use crate::keyword_service_gateway::json_to_model_mapper::{map_keywords, map_unused_keywords};
 use crate::keyword_service_gateway::response_filter::remove_invalid_keywords;
 use crate::keyword_service_gateway::KeywordResult;
 use crate::keywords::repository::save_keywords_batch;
