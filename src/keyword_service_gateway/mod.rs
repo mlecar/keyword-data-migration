@@ -1,4 +1,5 @@
 pub mod database_statistics;
+pub mod http_pool;
 pub mod json_to_model_mapper;
 pub mod keywords;
 pub mod response_filter;
