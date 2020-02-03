@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: update apt
+      run: sudo apt-get -y update
     - name: Install python-dev
       run: sudo apt-get -y install python-dev
     - name: Install default-libmysqlclient-dev
