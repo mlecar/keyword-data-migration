@@ -51,8 +51,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     now.elapsed().as_secs()
                 );
             }
-            _ => {
-                save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "ERROR ").unwrap();
+            Err(e)  => {
+                save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, &format!("{} - {}", "ERROR", e)).unwrap();
             }
         }
     });

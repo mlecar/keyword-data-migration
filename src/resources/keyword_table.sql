@@ -19,3 +19,5 @@ id bigint AUTO_INCREMENT PRIMARY KEY,
 )
 
 ALTER TABLE migration_statistics ADD migration_step varchar(10)
+
+alter table migration_statistics modify migration_step varchar(4000);
