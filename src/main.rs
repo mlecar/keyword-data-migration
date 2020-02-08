@@ -37,29 +37,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let unused_count = get_statistics(&http_pool, &statistics_url)?;
     save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "START")?;
 
-    let mut keyword_vec: Vec<i64> = Vec::new();
-    for x in keyword_id_start..=current_max_keyword_id {
-        keyword_vec.push(x);
-        if x == current_max_keyword_id || keyword_vec.len() == batch_size as usize {
-            let exec_time = Instant::now();
-            match get_keywords(&http_pool, &keyword_vec, &keyword_url, &conn) {
-                Ok(()) => {
-                    info!(
-                        "Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}",
-                        keyword_vec.get(0).unwrap(),
-                        keyword_vec.last().unwrap(),
-                        exec_time.elapsed().as_millis(),
-                        now.elapsed().as_secs()
-                    );
-                }
-                _ => {
-                    save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "ERROR ")?;
-                }
+    let mut keywords_list: Vec<i64> = (keyword_id_start..current_max_keyword_id).collect();
+
+    keywords_list.chunks_mut(batch_size as usize).for_each(| keywords | {
+        let exec_time = Instant::now();
+        match get_keywords(&http_pool, &keywords.to_vec(), &keyword_url, &conn) {
+            Ok(()) => {
+                info!(
+                    "Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}",
+                    keywords.first().unwrap(),
+                    keywords.last().unwrap(),
+                    exec_time.elapsed().as_millis(),
+                    now.elapsed().as_secs()
+                );
             }
-            keyword_vec.clear();
+            _ => {
+                save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "ERROR ").unwrap();
+            }
         }
-    }
-    save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "END")?;
+    });
+
+    save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "END").unwrap();
     info!(
         "Total execution from {:?} to {:?} in {:?} seconds",
         keyword_id_start,
