@@ -13,6 +13,7 @@ use keyword_data_migration::keyword_service_gateway::database_statistics::get_st
 use keyword_data_migration::keyword_service_gateway::http_pool::HttpPool;
 use keyword_data_migration::keyword_service_gateway::keywords::get_keywords;
 use keyword_data_migration::migration_statistics::repository::save_migration_statistic;
+use keyword_data_migration::KeywordManager;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let now = Instant::now();
@@ -37,16 +38,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let unused_count = get_statistics(&http_pool, &statistics_url)?;
     save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "START")?;
 
-    let mut keywords_list: Vec<i64> = (keyword_id_start..current_max_keyword_id).collect();
-
-    keywords_list.chunks_mut(batch_size as usize).for_each(| keywords | {
+    let mut keyword_manager = KeywordManager::new(keyword_id_start, batch_size, current_max_keyword_id);
+    while keyword_manager.has_next() {
         let exec_time = Instant::now();
-        match get_keywords(&http_pool, &keywords.to_vec(), &keyword_url, &conn) {
+        match get_keywords(&http_pool, &keyword_manager.next() , &keyword_url, &conn) {
             Ok(()) => {
                 info!(
                     "Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}",
-                    keywords.first().unwrap(),
-                    keywords.last().unwrap(),
+                    keyword_manager.first(),
+                    keyword_manager.last(),
                     exec_time.elapsed().as_millis(),
                     now.elapsed().as_secs()
                 );
@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, &format!("{} - {}", "ERROR", e)).unwrap();
             }
         }
-    });
+    }
 
     save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "END").unwrap();
     info!(
