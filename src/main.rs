@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
             Err(e)  => {
-                save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, &format!("{} - {}", "ERROR", e)).unwrap();
+                save_migration_statistic(&conn, &unused_count, &keyword_manager.first(), &keyword_manager.last(), &format!("{} - {}", "ERROR", e)).unwrap();
             }
         }
     }

@@ -1,5 +1,6 @@
 use reqwest::blocking::Client;
 use std::borrow::Borrow;
+use std::time::Duration;
 
 pub struct HttpPool {
     connection: Client,
@@ -7,7 +8,8 @@ pub struct HttpPool {
 
 impl HttpPool {
     pub fn new() -> HttpPool {
-        HttpPool { connection: Client::new() }
+        let client = Client::builder().timeout(Duration::new(30, 0)).build();
+        HttpPool { connection: client.unwrap() }
     }
 
     pub fn get_connection(&self) -> &Client {
