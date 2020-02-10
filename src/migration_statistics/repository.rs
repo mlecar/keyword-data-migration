@@ -6,9 +6,9 @@ use diesel::{MysqlConnection, RunQueryDsl};
 
 pub fn save_migration_statistic<'a>(
     conn: &MysqlConnection,
-    unused_count_param: &i64,
-    migrated_from_id_param: &i64,
-    migrated_to_id_param: &i64,
+    unused_count_param: i64,
+    migrated_from_id_param: i64,
+    migrated_to_id_param: i64,
     migration_step_param: &str,
 ) -> Result<(), Error> {
     let new_migration_statistic = (

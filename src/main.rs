@@ -3,10 +3,10 @@ extern crate keyword_data_migration;
 extern crate serde;
 extern crate simple_logger;
 
-use std::time::Instant;
+use std::time::{Instant, Duration};
 
 use config::Config;
-use log::{info, Level};
+use log::{info, error, Level};
 
 use keyword_data_migration::database_connection::establish_connection;
 use keyword_data_migration::keyword_service_gateway::database_statistics::get_statistics;
@@ -14,6 +14,7 @@ use keyword_data_migration::keyword_service_gateway::http_pool::HttpPool;
 use keyword_data_migration::keyword_service_gateway::keywords::get_keywords;
 use keyword_data_migration::migration_statistics::repository::save_migration_statistic;
 use keyword_data_migration::KeywordManager;
+use std::thread::sleep;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let now = Instant::now();
@@ -36,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let http_pool = HttpPool::new();
 
     let unused_count = get_statistics(&http_pool, &statistics_url)?;
-    save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "START")?;
+    save_migration_statistic(&conn, unused_count, keyword_id_start, current_max_keyword_id, "START")?;
 
     let mut keyword_manager = KeywordManager::new(keyword_id_start, batch_size, current_max_keyword_id);
     while keyword_manager.has_next() {
@@ -45,19 +46,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(()) => {
                 info!(
                     "Imported keywords from {:?} to {:?} in {:?} milliseconds. Total execution in {:?}",
-                    keyword_manager.first(),
-                    keyword_manager.last(),
+                    &keyword_manager.first(),
+                    &keyword_manager.last(),
                     exec_time.elapsed().as_millis(),
                     now.elapsed().as_secs()
                 );
             }
             Err(e)  => {
-                save_migration_statistic(&conn, &unused_count, &keyword_manager.first(), &keyword_manager.last(), &format!("{} - {}", "ERROR", e)).unwrap();
+                error!(
+                    "Error importing keywords from {:?} to {:?}. Error [{:?}]",
+                    keyword_manager.first(),
+                    keyword_manager.last(),
+                    e,
+                );
+                save_migration_statistic(&conn, unused_count, keyword_manager.first(), keyword_manager.last(), &format!("{} - {}", "ERROR", e)).unwrap();
+                // some relief to service
+                sleep(Duration::from_secs(60));
             }
         }
     }
 
-    save_migration_statistic(&conn, &unused_count, &keyword_id_start, &current_max_keyword_id, "END").unwrap();
+    save_migration_statistic(&conn, unused_count, keyword_id_start, current_max_keyword_id, "END").unwrap();
     info!(
         "Total execution from {:?} to {:?} in {:?} seconds",
         keyword_id_start,

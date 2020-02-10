@@ -12,7 +12,7 @@ use std::error::Error;
 pub fn get_keywords(http_pool: &HttpPool, keyword_vec: &Vec<i64>, keyword_url: &str, conn: &MysqlConnection) -> Result<(), Box<dyn Error>> {
     let item = json!({
         "keyword_id": keyword_vec,
-        "ignore_errors": true
+        "ignore_errors": "true"
     });
 
     match http_pool.get_connection().get(keyword_url).json(&item).send() {
