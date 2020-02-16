@@ -1,9 +1,12 @@
-CREATE TABLE `keyword_test` (
-                                `id` bigint unsigned PRIMARY KEY AUTO_INCREMENT COMMENT 'PK',
-                                `keyword` nvarchar(200) NOT NULL COMMENT 'keyword',
-    UNIQUE KEY `udx_keyword` (`keyword`) USING BTREE
-    ) ENGINE=InnoDB AUTO_INCREMENT=3232148376 DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='global keyword base';
-/*!40101 SET character_set_client = @saved_cs_client */;
+
+CREATE TABLE IF NOT EXISTS `keyword` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  `keyword` varchar(200) COLLATE utf8_bin NOT NULL COMMENT 'keyword',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `udx_keyword` (`keyword`) USING BTREE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
+
+CREATE INDEX idx_keyword_id ON keyword (id);
 
 CREATE TABLE `unused_keyword_id_test` (
     `id` bigint unsigned PRIMARY KEY COMMENT 'PK'
