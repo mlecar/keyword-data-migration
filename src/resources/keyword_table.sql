@@ -24,3 +24,23 @@ id bigint AUTO_INCREMENT PRIMARY KEY,
 ALTER TABLE migration_statistics ADD migration_step varchar(10)
 
 alter table migration_statistics modify migration_step varchar(4000);
+
+-- useful queries
+select * from keyword order by id desc
+
+select * from unused_keyword_id uki order by id desc
+
+select * from migration_statistics ORDER by id desc
+
+select * from keyword k where id < 4999 order by id desc
+
+insert into keyword (id, keyword) select id, keyword from keyword_2 k
+
+select count(id) from keyword k order by id desc
+
+optimize table keyword
+
+analyze table keyword
+
+
+
